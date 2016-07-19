@@ -16,8 +16,10 @@ class Follower:
     def image_callback(self, msg):
         image = self.bridge.imgmsg_to_cv2(
             msg, desired_encoding='bgr8')
-    cv2.imshow("window", image)
-    cv2.waitKey(3)
+
+
+        cv2.imshow("window", image)
+        cv2.waitKey(3)
 
 rospy.init_node('follower')
 follower = Follower()
