@@ -5,7 +5,7 @@ import numpy as np;
 # Read image
 im = cv2.imread("images/frame0070.jpg")
 
-im = cv2.resize(im, (0,0), fx=0.75, fy=0.75)
+#im = cv2.resize(im, (0,0), fx=0.75, fy=0.75)
 
 out = im.copy()
 
@@ -18,13 +18,6 @@ ranges = [
     [[7, 150, 200], [13, 255, 255]],
     [[55, 100, 60], [65, 255, 255]]
 ]
-
-for i in range(0, hsv.shape[1], 100):
-    for j in range(0, hsv.shape[0], 100):
-        pixel = hsv[j][i]
-        h, s, v = pixel
-        string = "%d/%d/%d" % (h, s, v)
-        #cv2.putText(im, string, (i, j), cv2.FONT_HERSHEY_SIMPLEX, 0.3, (255, 255, 255))
 
 for r1, r2 in ranges:
     r1 = np.array(r1)
