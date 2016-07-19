@@ -1,0 +1,12 @@
+# vim stuff
+*.swp
+*.swo
+
+# python stuff
+*.pyc
+
+# binaries?
+bin/
+
+# mac stuff
+.DS_Store
