@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from sensor_msgs/msg import Image
+from sensor_msgs.msg import Image
 import rospy
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
@@ -7,7 +7,7 @@ import threading
 
 #start a class called Echo
 class Echo:
-    def __init__:
+    def __init__(self):
         self.node_name = "Echo"
         #forces seperate process in computer to open so processes can run in parallel, doesnt have to wait for next message
         self.thread_lock = threading.Lock()
