@@ -14,7 +14,7 @@ class Control:
         #where we want the centroid to be in relation to the screen
         self.x_des = 640
         #desired area of object on screen
-        self.area_des = 15000
+        self.area_des = 120000
         #how accurate the centroid is from our current position
         self.centroid_threshhold = 20
         #how accurate the area is from the current area of the object
@@ -22,12 +22,12 @@ class Control:
         #initial steering angle
         self.steering_angle = 0.0
         #initial speed
-        self.speed = 1.0
+        self.speed = 0.5
         #p constant for pid controll
-        self.K_p = 0.5
+        self.K_p = -0.0005
 
     #calculate what the steering angle should be based on how far the centroid of the object is from the middle of the screen
-    def angle_control(self, centroid_cooor):
+    def angle_control(self, centroid_coor):
         centroid_errorx = centroid_coor - self.x_des
         #if the difference in centroid is small enough, don't have to change steering angle
         if abs(centroid_errorx) <= self.centroid_threshhold:
@@ -39,7 +39,7 @@ class Control:
         return steering_angle
 
     #calculate what the speed should be based on how big the object is in relation to the screen
-    def speed_control(self, area)
+    def speed_control(self, area):
         area_error = area - self.area_des
         #if the error is less then thershhold then neglect
         if abs(area_error) <= self.area_threshhold:
@@ -47,9 +47,9 @@ class Control:
         #if the desired area is bigger than actual, have positive speed and more towards the object
         elif area_error < 0:
             speed = self.speed
+	else:
+            speed = 0
         #otherwise move backwards
-        else:
-            speed = -self.speed
         return speed
 
     #callback function for recieving msgs from detection
@@ -67,7 +67,7 @@ class Control:
         out.drive.speed = speed
         out.drive.steering_angle = steering_angle
 
-        self.pub.Publish(out)
+        self.pub.publish(out)
 
 if __name__=="__main__":
     rospy.init_node("Control")
