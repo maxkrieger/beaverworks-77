@@ -7,14 +7,15 @@ from cv_bridge import CvBridge, CvBridgeError
 import threading
 
 
-class Echo:
+class ColorTracker:
     def __init__(self):
-        self.node_name = "Echo"
+        self.node_name = "ColorTracker"
         self.thread_lock = threading.Lock()
         self.sub_image = rospy.Subscriber("/camera/rgb/image_rect_color",\
                 Image, self.cbImage, queue_size=1)
         self.pub_image = rospy.Publisher("~echo_image",\
                 Image, queue_size=1)
+
         self.bridge = CvBridge()
 
         rospy.loginfo("[%s] Initialized." %(self.node_name))
@@ -60,6 +61,13 @@ class Echo:
             coord = (approx[0][0][0], approx[0][0][1])
             cv2.putText(img, "GREEN", coord, cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255),  2)
 
+            M = cv2.moments(approx)
+            cx, cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
+
+            cv2.circle(img, (cx, cy), 10, (255, 255, 255), -1)
+
+            print("The area is ", cv2.contourArea(approx))
+
 
         return img
 
@@ -80,7 +88,7 @@ class Echo:
 
 
 if __name__=="__main__":
-    rospy.init_node('Echo')
-    e = Echo()
+    rospy.init_node('ColorTracker')
+    e = ColorTracker()
     rospy.spin()
 
