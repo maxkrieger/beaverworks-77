@@ -26,16 +26,18 @@ class Echo:
 
     def detection(self, img):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower = np.array([20, 215, 170])
-        upper = np.array([29, 255, 255])
+        lower = np.array([65, 100, 100])
+        upper = np.array([85, 255, 255])
         mask = cv2.inRange(hsv, lower, upper)
 
-        #return cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+        # cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
         mask = cv2.erode(mask, (3,3), iterations=1)
         # mask = cv2.GaussianBlur(mask, (11, 11), 0)
 
         contours, h = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+	cv2.drawContours(img, contours, -1, (0, 0, 255), 2)
         
         for i in range(0, len(contours)):
             c = contours[i]
@@ -56,7 +58,7 @@ class Echo:
             cv2.drawContours(img, [approx], -1, (0, 255, 0), 5) 
 
             coord = (approx[0][0][0], approx[0][0][1])
-            cv2.putText(img, "YELLOW", coord, cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255),  2)
+            cv2.putText(img, "GREEN", coord, cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255),  2)
 
 
         return img
