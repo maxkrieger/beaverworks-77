@@ -1,0 +1,4 @@
+<launch>
+	<node name="Detector" pkg="beaverworks-77" type="detection.py"/>
+	<node name="Control" pkg="beaverworks-77" type="controller.py"/>
+</launch>
