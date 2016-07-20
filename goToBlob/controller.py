@@ -56,9 +56,9 @@ class Control:
     def scan_recieved(self, msg):
         self.drive(
             #pass in actual area, which is the first arg of the message, to change the speed
-            self.speed_control(msg[0]),
+            self.speed_control(msg.data[0]),
             #pass in the x of the centroid of the obj to change the steering angle
-            self.angle_control(msg[1])
+            self.angle_control(msg.data[1])
         )
 
     #callback function for driving
