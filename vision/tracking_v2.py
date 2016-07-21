@@ -5,6 +5,7 @@ import rospy
 
 from sensor_msgs.msg import Image
 from std_msgs.msg import Int32MultiArray
+from beaverworks77.msg import blob as BlobMsg
 
 from cv_bridge import CvBridge, CvBridgeError
 import threading
@@ -19,7 +20,7 @@ class ColorTracker:
         self.pub_image = rospy.Publisher("~echo_image",\
                 Image, queue_size=1)
 
-        self.pub_detection = rospy.Publisher("/detection", Int32MultiArray, queue_size=10)
+        self.pub_detection = rospy.Publisher("/detection", BlobMsg, queue_size=10)
 
         self.debugging = debugging
 
@@ -33,9 +34,38 @@ class ColorTracker:
         thread.start()
 
     def detection(self, img):
+        green_lower = np.array([65, 100, 100])
+        green_upper = np.array([85, 255, 255])
+
+        ret = self.detect_color_blob(img, green_lower, green_upper)
+        color_code = 1
+        if ret == None:
+            red_lower = np.array([0, 100, 90])
+            red_upper = np.array([15, 255, 255])
+            ret = self.detect_color_blob(img, red_lower, red_upper)
+            color_code = 2
+
+        if ret == None:
+            cx = 0
+            cy = 0
+            area = 0
+            color_code = 0
+        else:
+            cx, cy, area = ret
+
+        msg = BlobMsg()
+        msg.area = area
+        msg.x = cx
+        msg.target = color_code
+
+        print(msg)
+
+        print(cx, cy, area, color_code)
+
+        # publish message
+
+    def detect_color_blob(self, img, lower, upper)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        lower = np.array([65, 100, 100])
-        upper = np.array([85, 255, 255])
         mask = cv2.inRange(hsv, lower, upper)
 
         mask = cv2.erode(mask, (3,3), iterations=1)
@@ -44,39 +74,44 @@ class ColorTracker:
 
         if self.debugging:
             cv2.drawContours(img, contours, -1, (0, 0, 255), 2)
-        
-        for i in range(0, len(contours)):
-            c = contours[i]
-            area = cv2.contourArea(c)
-            if area < 600: # minimum area threshold
-                continue
 
-            perim = cv2.arcLength(c, True) # perimeter
-            approx = cv2.approxPolyDP(c, 0.05 * perim, True)
+        sorted_contours = sorted(contours, key = lambda c: cv2.contourArea(c), reverse=True)
 
-            if len(approx) != 4:
-                continue
+        if len(sorted_contours) < 1:
+            return None
 
+        c = sorted_contours[0]
 
-            if self.debugging:
-                cv2.drawContours(img, [c], -1, (255, 0, 0), 3) 
-                cv2.drawContours(img, [approx], -1, (0, 255, 0), 5) 
+        c = contours[i]
+        area = cv2.contourArea(c)
+        if area < 600: # minimum area threshold
+            return None
 
-                coord = (approx[0][0][0], approx[0][0][1])
-                cv2.putText(img, "GREEN", coord, cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255),  2)
+        perim = cv2.arcLength(c, True) # perimeter
+        approx = cv2.approxPolyDP(c, 0.05 * perim, True)
 
-            M = cv2.moments(approx)
-            cx, cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-
-            if self.debugging:
-                cv2.circle(img, (cx, cy), 10, (255, 255, 255), -1)
-
-            approx_area = cv2.contourArea(approx)
-
-            self.publish_detected(cx, cy, approx_area)
+        if len(approx) != 4:
+            return None
 
 
-        return img
+        if self.debugging:
+            cv2.drawContours(img, [c], -1, (255, 0, 0), 3) 
+            cv2.drawContours(img, [approx], -1, (0, 255, 0), 5) 
+
+            coord = (approx[0][0][0], approx[0][0][1])
+            cv2.putText(img, "GREEN", coord, cv2.FONT_HERSHEY_PLAIN, 3, (255, 255, 255),  2)
+
+        M = cv2.moments(approx)
+        cx, cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
+
+        if self.debugging:
+            cv2.circle(img, (cx, cy), 10, (255, 255, 255), -1)
+
+        approx_area = cv2.contourArea(approx)
+
+        self.publish_detected(cx, cy, approx_area)
+
+        return (cx, cy, approx_area)
 
 
     def publish_detected(self, cx, cy, approx_area):
@@ -89,12 +124,12 @@ class ColorTracker:
             return
         image_cv = self.bridge.imgmsg_to_cv2(image_msg)
 
-        output = self.detection(image_cv)
+        self.detection(image_cv)
         
         if self.debugging:
             try:
                 self.pub_image.publish(\
-                        self.bridge.cv2_to_imgmsg(output, "bgr8"))
+                        self.bridge.cv2_to_imgmsg(image_cv, "bgr8"))
             except CvBridgeError as e:
                 print(e)
         self.thread_lock.release()
