@@ -40,7 +40,7 @@ class ColorTracker:
         ret = self.detect_color_blob(img, green_lower, green_upper)
         color_code = 1
         if ret == None:
-            red_lower = np.array([0, 100, 90])
+            red_lower = np.array([0, 160, 120])
             red_upper = np.array([15, 255, 255])
             ret = self.detect_color_blob(img, red_lower, red_upper)
             color_code = 2
@@ -59,12 +59,10 @@ class ColorTracker:
         msg.target = color_code
 
         print(msg)
-
-        print(cx, cy, area, color_code)
-
+        self.pub_detection.publish(msg)
         # publish message
 
-    def detect_color_blob(self, img, lower, upper)
+    def detect_color_blob(self, img, lower, upper):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, lower, upper)
 
@@ -82,7 +80,6 @@ class ColorTracker:
 
         c = sorted_contours[0]
 
-        c = contours[i]
         area = cv2.contourArea(c)
         if area < 600: # minimum area threshold
             return None
@@ -109,15 +106,8 @@ class ColorTracker:
 
         approx_area = cv2.contourArea(approx)
 
-        self.publish_detected(cx, cy, approx_area)
-
         return (cx, cy, approx_area)
 
-
-    def publish_detected(self, cx, cy, approx_area):
-        msg = Int32MultiArray()
-        msg.data = [approx_area, cx]
-        self.pub_detection.publish(msg)
 
     def processImage(self, image_msg):
         if not self.thread_lock.acquire(False):

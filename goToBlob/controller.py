@@ -3,6 +3,7 @@
 import rospy
 from ackermann_msgs.msg import AckermannDriveStamped
 from std_msgs.msg import Int32MultiArray, Int32
+from beaverworks77.msg import blob as BlobMsg
 
 STATE_FOLLOW_BLOB = 0
 STATE_NUDGE       = 1
@@ -15,12 +16,10 @@ TARGET_RED = 2
 class Control:
 
     def __init__(self):
-        rospy.Subscriber("/detection", Int32MultiArray, self.detection_recieved)
+        rospy.Subscriber("/detection", BlobMsg, self.detection_recieved)
         
-        rospy.Subscriber("/wallfollow", Int32MultiArray, self.wallfollower_received)
-
-        rospy.Subscriber("/wallfollower_left", AckermannDriveStamped, self.wallfollow_left)
-        rospy.Subscriber("/wallfollower_right", AckermannDriveStamped, self.wallfollow_right)
+        rospy.Subscriber("/wallfollower_left", AckermannDriveStamped, self.wallfollower_left)
+        rospy.Subscriber("/wallfollower_right", AckermannDriveStamped, self.wallfollower_right)
  
         self.drive_pub = rospy.Publisher("/vesc/ackermann_cmd_mux/input/navigation", AckermannDriveStamped, queue_size=1)
 
@@ -52,38 +51,45 @@ class Control:
             steering_angle = 0
         #if not, use proportional control
         else:
-            p = self.K_p * centroid_errorx
+            p = self.follow_blob_K_p * centroid_errorx
             steering_angle = p
         return steering_angle
 
     #callback function for recieving msgs from detection
     def detection_recieved(self, msg):
+        if msg.target == 0:
+            return
+
         if self.state == STATE_FOLLOW_BLOB:
             self.drive(
                 #pass in actual area, which is the first arg of the message, to change the speed
-                self.speed
+                self.speed,
                 #pass in the x of the centroid of the obj to change the steering angle
-                self.angle_control(msg.x_centroid)
+                self.angle_control(msg.x)
             )
             if msg.area > self.area_des:
                 self.nudge_iteration = 0
-                self.direction = 'left' # to do 
-                self.nudge_timer = rospy.Timer(.1, self.nudge_callback)
+                self.direction = 'left' if msg.target == 1 else 'right'
+                self.nudge_timer = rospy.Timer(rospy.Duration(.2), self.nudge_callback)
 
 
     def wallfollower_left(self, msg):
-        self.drive_pub.publish(msg)
+        if self.state == STATE_FOLLOW_WALL and self.direction == 'left':
+            self.drive_pub.publish(msg)
 
     def wallfollower_right(self, msg):
-        pass
+        if self.state == STATE_FOLLOW_WALL and self.direction == 'right':
+            self.drive_pub.publish(msg)
             
-    def nudge_callback(self):
+    def nudge_callback(self, _):
+        print("NUDGE CALLBACK")
         if self.direction == 'left':
             self.drive(0.5, 0.15)
         elif self.nudge_direction == 'right':
             self.drive(0.5, -0.15)
         
         self.nudge_iteration += 1
+        print(self.nudge_iteration)
         if self.nudge_iteration > 10:
             self.nudge_timer.shutdown()
             self.state = STATE_FOLLOW_WALL
