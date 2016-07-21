@@ -2,14 +2,27 @@
 #!/usr/bin/env python
 import rospy
 from ackermann_msgs.msg import AckermannDriveStamped
-from std_msgs.msg import Int32MultiArray
+from std_msgs.msg import Int32MultiArray, Int32
 
+STATE_FOLLOW_BLOB = 0
+STATE_NUDGE       = 1
+STATE_FOLLOW_WALL = 2
+
+TARGET_NONE = 0
+TARGET_GREEN = 1
+TARGET_RED = 2
 
 class Control:
 
     def __init__(self):
-        self.sub = rospy.Subscriber("/detection", Int32MultiArray, self.scan_recieved)
-        self.pub = rospy.Publisher("/vesc/ackermann_cmd_mux/input/navigation", AckermannDriveStamped, queue_size=1)
+        rospy.Subscriber("/detection", Int32MultiArray, self.detection_recieved)
+        
+        rospy.Subscriber("/wallfollow", Int32MultiArray, self.wallfollower_received)
+
+        rospy.Subscriber("/wallfollower_left", AckermannDriveStamped, self.wallfollow_left)
+        rospy.Subscriber("/wallfollower_right", AckermannDriveStamped, self.wallfollow_right)
+ 
+        self.drive_pub = rospy.Publisher("/vesc/ackermann_cmd_mux/input/navigation", AckermannDriveStamped, queue_size=1)
 
         #where we want the centroid to be in relation to the screen
         self.x_des = 640
@@ -24,7 +37,12 @@ class Control:
         #initial speed
         self.speed = 0.5
         #p constant for pid controll
-        self.K_p = -0.0005
+        self.follow_blob_K_p = -0.0005
+
+        self.follow_wall_K_p = 0.5
+        self.follow_wall_desired = 0.65
+
+        self.state = STATE_FOLLOW_BLOB
 
     #calculate what the steering angle should be based on how far the centroid of the object is from the middle of the screen
     def angle_control(self, centroid_coor):
@@ -38,28 +56,37 @@ class Control:
             steering_angle = p
         return steering_angle
 
-    #calculate what the speed should be based on how big the object is in relation to the screen
-    def speed_control(self, area):
-        area_error = area - self.area_des
-        #if the error is less then thershhold then neglect
-        if abs(area_error) <= self.area_threshhold:
-            speed = 0
-        #if the desired area is bigger than actual, have positive speed and more towards the object
-        elif area_error < 0:
-            speed = self.speed
-	else:
-            speed = 0
-        #otherwise move backwards
-        return speed
-
     #callback function for recieving msgs from detection
-    def scan_recieved(self, msg):
-        self.drive(
-            #pass in actual area, which is the first arg of the message, to change the speed
-            self.speed_control(msg.data[0]),
-            #pass in the x of the centroid of the obj to change the steering angle
-            self.angle_control(msg.data[1])
-        )
+    def detection_recieved(self, msg):
+        if self.state == STATE_FOLLOW_BLOB:
+            self.drive(
+                #pass in actual area, which is the first arg of the message, to change the speed
+                self.speed
+                #pass in the x of the centroid of the obj to change the steering angle
+                self.angle_control(msg.x_centroid)
+            )
+            if msg.area > self.area_des:
+                self.nudge_iteration = 0
+                self.direction = 'left' # to do 
+                self.nudge_timer = rospy.Timer(.1, self.nudge_callback)
+
+
+    def wallfollower_left(self, msg):
+        self.drive_pub.publish(msg)
+
+    def wallfollower_right(self, msg):
+        pass
+            
+    def nudge_callback(self):
+        if self.direction == 'left':
+            self.drive(0.5, 0.15)
+        elif self.nudge_direction == 'right':
+            self.drive(0.5, -0.15)
+        
+        self.nudge_iteration += 1
+        if self.nudge_iteration > 10:
+            self.nudge_timer.shutdown()
+            self.state = STATE_FOLLOW_WALL
 
     #callback function for driving
     def drive(self, speed, steering_angle):
@@ -67,7 +94,7 @@ class Control:
         out.drive.speed = speed
         out.drive.steering_angle = steering_angle
 
-        self.pub.publish(out)
+        self.drive_pub.publish(out)
 
 if __name__=="__main__":
     rospy.init_node("Control")
