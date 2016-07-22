@@ -68,6 +68,7 @@ class Control:
                 self.angle_control(msg.x)
             )
             if msg.area > self.area_des:
+                self.state = STATE_NUDGE
                 self.nudge_iteration = 0
                 self.direction = 'left' if msg.target == 1 else 'right'
                 self.nudge_timer = rospy.Timer(rospy.Duration(.2), self.nudge_callback)
@@ -82,14 +83,12 @@ class Control:
             self.drive_pub.publish(msg)
             
     def nudge_callback(self, _):
-        print("NUDGE CALLBACK")
         if self.direction == 'left':
             self.drive(0.5, 0.15)
         elif self.nudge_direction == 'right':
             self.drive(0.5, -0.15)
         
         self.nudge_iteration += 1
-        print(self.nudge_iteration)
         if self.nudge_iteration > 10:
             self.nudge_timer.shutdown()
             self.state = STATE_FOLLOW_WALL
