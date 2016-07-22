@@ -26,11 +26,10 @@ class Control:
         #where we want the centroid to be in relation to the screen
         self.x_des = 640
         #desired area of object on screen
-        self.area_des = 120000
+        self.area_des = 15000
         #how accurate the centroid is from our current position
         self.centroid_threshhold = 20
-        #how accurate the area is from the current area of the object
-        self.area_threshhold = 80
+        #how accurate the area is from the current area of the object self.area_threshhold = 80
         #initial steering angle
         self.steering_angle = 0.0
         #initial speed
@@ -70,7 +69,7 @@ class Control:
             if msg.area > self.area_des:
                 self.state = STATE_NUDGE
                 self.nudge_iteration = 0
-                self.direction = 'left' if msg.target == 1 else 'right'
+                self.direction = 'right' if msg.target == 1 else 'left'
                 self.nudge_timer = rospy.Timer(rospy.Duration(.2), self.nudge_callback)
 
 
@@ -84,12 +83,15 @@ class Control:
             
     def nudge_callback(self, _):
         if self.direction == 'left':
-            self.drive(0.5, 0.15)
-        elif self.nudge_direction == 'right':
-            self.drive(0.5, -0.15)
+            self.drive(0.7, 0.35)
+        elif self.direction == 'right':
+            self.drive(0.7, -0.35)
+
+        print("doing nudge")
         
         self.nudge_iteration += 1
-        if self.nudge_iteration > 10:
+        if self.nudge_iteration > 8:
+            print("ENTERING WALL FOLLOWING")
             self.nudge_timer.shutdown()
             self.state = STATE_FOLLOW_WALL
 

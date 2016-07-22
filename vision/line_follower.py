@@ -38,7 +38,7 @@ class ColorTracker:
 
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
-        lower = np.array([25, 60, 90])
+        lower = np.array([25, 35, 140])
         upper = np.array([40, 255, 255])
         mask = cv2.inRange(hsv, lower, upper)
 

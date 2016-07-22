@@ -34,8 +34,8 @@ class ColorTracker:
         thread.start()
 
     def detection(self, img):
-        green_lower = np.array([65, 100, 100])
-        green_upper = np.array([85, 255, 255])
+        green_lower = np.array([54, 30, 60])
+        green_upper = np.array([72, 255, 255])
 
         ret = self.detect_color_blob(img, green_lower, green_upper)
         color_code = 1

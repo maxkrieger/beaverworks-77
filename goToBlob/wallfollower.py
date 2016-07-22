@@ -5,9 +5,9 @@ from sensor_msgs.msg import LaserScan
 import std_msgs
 import math
 
-PID_KP = 0.95
+PID_KP = 1.5
 PID_KD = 0.00
-DESIRED_DIST = 0.609
+DESIRED_DIST = 0.33
 
 class wall_follow:
     def __init__(self):
@@ -40,10 +40,10 @@ class wall_follow:
         
     def laser_callback(self, msg):
         self.follow_left = True
-        self.simulate_callback(msg, self.pub_left)
+        self.simulate_callback(msg, self.pub_right)
 
         self.follow_left = False
-        self.simulate_callback(msg, self.pub_right)
+        self.simulate_callback(msg, self.pub_left)
         
     def simulate_callback(self, msg, publisher):
         actual_dist = self.calc_actual_dist(msg.ranges)
@@ -71,7 +71,7 @@ class wall_follow:
         # rospy.loginfo("steering is %f", steer_output)
     
         drive_msg = AckermannDriveStamped()
-        drive_msg.drive.speed = 2.0 # max speed
+        drive_msg.drive.speed = 0.5 # max speed
         drive_msg.drive.steering_angle = steer_output
         publisher.publish(drive_msg)
 
