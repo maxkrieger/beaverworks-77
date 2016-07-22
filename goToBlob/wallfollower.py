@@ -7,7 +7,6 @@ import math
 
 PID_KP = 1.5
 PID_KD = 0.00
-DESIRED_DIST = 0.33
 
 class wall_follow:
     def __init__(self):
@@ -19,7 +18,7 @@ class wall_follow:
 
         self.follow_left = True
 
-        self.desired = 0.609
+        self.desired = 0.45
     
     def calc_actual_dist(self, ranges):
         if self.follow_left:
@@ -50,6 +49,8 @@ class wall_follow:
         # rospy.loginfo("The actual distance: %f", actual_dist)
         # rospy.loginfo("Direction: %d", self.follow_left)
 
+        print(actual_dist)
+
         error = self.desired - actual_dist
         
         if self.last_error != None:
@@ -71,7 +72,7 @@ class wall_follow:
         # rospy.loginfo("steering is %f", steer_output)
     
         drive_msg = AckermannDriveStamped()
-        drive_msg.drive.speed = 0.5 # max speed
+        drive_msg.drive.speed = 2 # max speed
         drive_msg.drive.steering_angle = steer_output
         publisher.publish(drive_msg)
 

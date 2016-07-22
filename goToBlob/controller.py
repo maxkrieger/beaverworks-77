@@ -1,9 +1,10 @@
-
 #!/usr/bin/env python
 import rospy
 from ackermann_msgs.msg import AckermannDriveStamped
 from std_msgs.msg import Int32MultiArray, Int32
 from beaverworks77.msg import blob as BlobMsg
+
+import math
 
 STATE_FOLLOW_BLOB = 0
 STATE_NUDGE       = 1
@@ -26,20 +27,22 @@ class Control:
         #where we want the centroid to be in relation to the screen
         self.x_des = 640
         #desired area of object on screen
-        self.area_des = 15000
+        self.area_des = 8000
         #how accurate the centroid is from our current position
         self.centroid_threshhold = 20
         #how accurate the area is from the current area of the object self.area_threshhold = 80
         #initial steering angle
         self.steering_angle = 0.0
         #initial speed
-        self.speed = 0.5
+        self.speed = 1.3
         #p constant for pid controll
         self.follow_blob_K_p = -0.0005
 
         self.follow_wall_K_p = 0.5
         self.follow_wall_desired = 0.65
 
+        # temp
+        #self.direction = 'right'
         self.state = STATE_FOLLOW_BLOB
 
     #calculate what the steering angle should be based on how far the centroid of the object is from the middle of the screen
@@ -60,9 +63,11 @@ class Control:
             return
 
         if self.state == STATE_FOLLOW_BLOB:
+            speed = 200 / math.sqrt(msg.area)
+            print(speed)
             self.drive(
                 #pass in actual area, which is the first arg of the message, to change the speed
-                self.speed,
+                2,
                 #pass in the x of the centroid of the obj to change the steering angle
                 self.angle_control(msg.x)
             )
@@ -83,9 +88,9 @@ class Control:
             
     def nudge_callback(self, _):
         if self.direction == 'left':
-            self.drive(0.7, 0.35)
+            self.drive(1.2, 0.35)
         elif self.direction == 'right':
-            self.drive(0.7, -0.35)
+            self.drive(0.9, -0.32)
 
         print("doing nudge")
         

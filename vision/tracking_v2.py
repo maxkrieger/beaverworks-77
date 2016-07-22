@@ -40,7 +40,7 @@ class ColorTracker:
         ret = self.detect_color_blob(img, green_lower, green_upper)
         color_code = 1
         if ret == None:
-            red_lower = np.array([0, 160, 120])
+            red_lower = np.array([0, 160, 130])
             red_upper = np.array([15, 255, 255])
             ret = self.detect_color_blob(img, red_lower, red_upper)
             color_code = 2
@@ -81,7 +81,7 @@ class ColorTracker:
         c = sorted_contours[0]
 
         area = cv2.contourArea(c)
-        if area < 600: # minimum area threshold
+        if area < 400: # minimum area threshold
             return None
 
         perim = cv2.arcLength(c, True) # perimeter
