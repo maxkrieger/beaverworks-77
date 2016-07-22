@@ -1,4 +1,6 @@
 <launch>
-	<node name="Detector" pkg="beaverworks-77" type="detection.py"/>
-	<node name="Control" pkg="beaverworks-77" type="controller.py"/>
+	<include file="$(find racecar)/launch/teleop.launch"/>
+	<node name="ColorTracker" pkg="beaverworks77" type="~/vision/tracking_v2.py"/>
+	<node name="Control" pkg="beaverworks77" type="~/goToBlob/controller.py"/>
+	<node name="wall_follower" pkg="beaverworks77" type="~/goToBlob/wallfollower.py/">
 </launch>
