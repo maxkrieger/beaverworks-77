@@ -27,7 +27,7 @@ class Control:
         #where we want the centroid to be in relation to the screen
         self.x_des = 640
         #desired area of object on screen
-        self.area_des = 8000
+        self.area_des = 7000
         #how accurate the centroid is from our current position
         self.centroid_threshhold = 20
         #how accurate the area is from the current area of the object self.area_threshhold = 80
@@ -73,7 +73,7 @@ class Control:
             )
             if msg.area > self.area_des:
                 self.state = STATE_NUDGE
-                self.nudge_iteration = 0
+                self.nudge_iteration = 2 if msg.target == 1 else 0
                 self.direction = 'right' if msg.target == 1 else 'left'
                 self.nudge_timer = rospy.Timer(rospy.Duration(.2), self.nudge_callback)
 
@@ -88,9 +88,9 @@ class Control:
             
     def nudge_callback(self, _):
         if self.direction == 'left':
-            self.drive(1.2, 0.35)
+            self.drive(1.5, 0.40)
         elif self.direction == 'right':
-            self.drive(0.9, -0.32)
+            self.drive(1.0, -0.35)
 
         print("doing nudge")
         

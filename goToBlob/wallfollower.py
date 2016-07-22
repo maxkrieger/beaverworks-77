@@ -5,8 +5,10 @@ from sensor_msgs.msg import LaserScan
 import std_msgs
 import math
 
-PID_KP = 1.5
-PID_KD = 0.00
+PID_KP_LEFT = 0.9
+PID_KP_RIGHT = 1.3
+
+PID_KD = 0
 
 class wall_follow:
     def __init__(self):
@@ -23,9 +25,9 @@ class wall_follow:
     def calc_actual_dist(self, ranges):
         if self.follow_left:
             end_index = 900
-            start_index = 780
+            start_index = 850
         else: # follow right
-            end_index = 1081 - 780
+            end_index = 1081 - 850
             start_index = 1081 - 900
 
         angle_degrees = (270.0 / 1081.0) * (end_index - start_index)
@@ -49,7 +51,6 @@ class wall_follow:
         # rospy.loginfo("The actual distance: %f", actual_dist)
         # rospy.loginfo("Direction: %d", self.follow_left)
 
-        print(actual_dist)
 
         error = self.desired - actual_dist
         
@@ -62,7 +63,11 @@ class wall_follow:
         if self.follow_left:
             sign = -1
 
-        steer_output = (sign * PID_KP * error) + (sign * PID_KD * deriv)
+        if self.follow_left:
+            pid_kp = PID_KP_LEFT
+        else:
+            pid_kp = PID_KP_RIGHT
+        steer_output = (sign * pid_kp * error) + (sign * PID_KD * deriv)
 
         if steer_output > 0.4:
             steer_output = 0.4
