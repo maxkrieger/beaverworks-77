@@ -18,10 +18,10 @@ class Control:
 
     def __init__(self):
         rospy.Subscriber("/detection", BlobMsg, self.detection_recieved)
-        
+
         rospy.Subscriber("/wallfollower_left", AckermannDriveStamped, self.wallfollower_left)
         rospy.Subscriber("/wallfollower_right", AckermannDriveStamped, self.wallfollower_right)
- 
+
         self.drive_pub = rospy.Publisher("/vesc/ackermann_cmd_mux/input/navigation", AckermannDriveStamped, queue_size=1)
 
         #where we want the centroid to be in relation to the screen
@@ -73,7 +73,7 @@ class Control:
             )
             if msg.area > self.area_des:
                 self.state = STATE_NUDGE
-                self.nudge_iteration = 2 if msg.target == 1 else 0
+                #self.nudge_iteration = 2 if msg.target == 1 else 0
                 self.direction = 'right' if msg.target == 1 else 'left'
                 self.nudge_timer = rospy.Timer(rospy.Duration(.2), self.nudge_callback)
 
@@ -85,7 +85,7 @@ class Control:
     def wallfollower_right(self, msg):
         if self.state == STATE_FOLLOW_WALL and self.direction == 'right':
             self.drive_pub.publish(msg)
-            
+
     def nudge_callback(self, _):
         if self.direction == 'left':
             self.drive(1.5, 0.40)
@@ -93,7 +93,7 @@ class Control:
             self.drive(1.0, -0.35)
 
         print("doing nudge")
-        
+
         self.nudge_iteration += 1
         if self.nudge_iteration > 8:
             print("ENTERING WALL FOLLOWING")

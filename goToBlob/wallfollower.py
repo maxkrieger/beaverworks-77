@@ -6,7 +6,6 @@ import std_msgs
 import math
 
 PID_KP_LEFT = 0.9
-PID_KP_RIGHT = 1.3
 
 PID_KD = 0
 
@@ -21,7 +20,7 @@ class wall_follow:
         self.follow_left = True
 
         self.desired = 0.45
-    
+
     def calc_actual_dist(self, ranges):
         if self.follow_left:
             end_index = 900
@@ -37,15 +36,15 @@ class wall_follow:
         dist = (r1 * r2 * math.sin(math.radians(angle_degrees)))
         dist /= math.sqrt(r1**2 + r2**2 - 2*r1*r2*math.cos(math.radians(angle_degrees)))
         return dist
-        
-        
+
+
     def laser_callback(self, msg):
         self.follow_left = True
         self.simulate_callback(msg, self.pub_right)
 
         self.follow_left = False
         self.simulate_callback(msg, self.pub_left)
-        
+
     def simulate_callback(self, msg, publisher):
         actual_dist = self.calc_actual_dist(msg.ranges)
         # rospy.loginfo("The actual distance: %f", actual_dist)
@@ -53,7 +52,7 @@ class wall_follow:
 
 
         error = self.desired - actual_dist
-        
+
         if self.last_error != None:
             deriv = (error - self.last_error) / msg.scan_time
         else:
@@ -66,7 +65,7 @@ class wall_follow:
         if self.follow_left:
             pid_kp = PID_KP_LEFT
         else:
-            pid_kp = PID_KP_RIGHT
+            pid_kp = PID_KP_LEFT
         steer_output = (sign * pid_kp * error) + (sign * PID_KD * deriv)
 
         if steer_output > 0.4:
@@ -75,7 +74,7 @@ class wall_follow:
             steer_output = -0.4
 
         # rospy.loginfo("steering is %f", steer_output)
-    
+
         drive_msg = AckermannDriveStamped()
         drive_msg.drive.speed = 2 # max speed
         drive_msg.drive.steering_angle = steer_output
@@ -86,4 +85,4 @@ class wall_follow:
 if __name__ == '__main__':
     rospy.init_node('wall_follower')
     node = wall_follow()
-    rospy.spin()            
+    rospy.spin()
